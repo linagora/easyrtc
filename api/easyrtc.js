@@ -3625,14 +3625,34 @@ var Easyrtc = function() {
         }
     };
 
+    var extend = function(out) {
+        out = out || {};
 
-    function connectToWSServer(successCallback, errorCallback) {
+        for (var i = 1; i < arguments.length; i++) {
+            if (!arguments[i]) {
+                continue;
+            }
+
+            for (var key in arguments[i]) {
+                if (arguments[i].hasOwnProperty(key)) {
+                    out[key] = arguments[i][key];
+                }
+            }
+        }
+        return out;
+    };
+
+    function connectToWSServer(settings, successCallback, errorCallback) {
         var i;
         if (!self.webSocket) {
-            self.webSocket = io.connect(serverPath, {
+            var defaults = {
                 'connect timeout': 10000,
                 'force new connection': true
-            });
+            };
+            settings = settings || {};
+            var options = {};
+            extend(options, defaults, settings.ws || {});
+            self.webSocket = io.connect(serverPath, options);
             if (!self.webSocket) {
                 throw "io.connect failed";
             }
@@ -4410,12 +4430,14 @@ var Easyrtc = function() {
      * side effects is to add hangup buttons to the remote video objects, buttons
      * that only appear when you hover over them with the mouse cursor. This method will also add the
      * easyrtcMirror class to the monitor video object so that it behaves like a mirror.
-     *  @param {String} applicationName - name of the application.
+     *  @param {Object} applicationName - name of the application or settings hash with applicationName attribute.
      *  @param {String} monitorVideoId - the id of the video object used for monitoring the local stream.
      *  @param {Array} videoIds - an array of video object ids (strings)
      *  @param {Function} onReady - a callback function used on success. It is called with the easyrtcId this peer is known to the server as.
      *  @param {Function} onFailure - a callback function used on failure (failed to get local media or a connection of the signaling server).
      *  @example
+     *
+     *     // Create an easyRTC app without settings
      *     easyrtc.easyApp('multiChat', 'selfVideo', ['remote1', 'remote2', 'remote3'],
      *              function(easyrtcId){
      *                  console.log("successfully connected, I am " + easyrtcId);
@@ -4423,8 +4445,17 @@ var Easyrtc = function() {
      *              function(errorCode, errorText){
      *                  console.log(errorText);
      *              );
+     *
+     *     // Create an easyRTC app with additional settings
+     *     easyrtc.easyApp({applicationName: 'multiChat', ws: {query: token='MYTOKEN'}}, 'selfVideo', ['remote1', 'remote2', 'remote3'],
+     *              function(easyrtcId){
+     *                  console.log("successfully connected, I am " + easyrtcId);
+     *              },
+     *              function(errorCode, errorText){
+     *                  console.log(errorText);
+     *              );
      */
-    this.easyApp = function(applicationName, monitorVideoId, videoIds, onReady, onFailure) {
+    this.easyApp = function(settings, monitorVideoId, videoIds, onReady, onFailure) {
         var gotMediaCallback = null,
                 gotConnectionCallback = null;
 
@@ -4482,7 +4513,7 @@ var Easyrtc = function() {
                 }
             }
 
-            self.connect(applicationName, nextInitializationStep, connectError);
+            self.connect(settings, nextInitializationStep, connectError);
         }
 
         if (self.localStream) {
@@ -4514,7 +4545,12 @@ var Easyrtc = function() {
     this.initManaged = this.easyApp;
 
 
-    this.connect = function(applicationName, successCallback, errorCallback) {
+    this.connect = function(settings, successCallback, errorCallback) {
+
+        var applicationName = settings.applicationName || settings;
+        if (!typeof settings === 'Object') {
+          settings = {};
+        }
 
         if (!window.io) {
             self.showError("Developer error", "Your HTML has not included the socket.io.js library");
@@ -4544,7 +4580,7 @@ var Easyrtc = function() {
             };
         }
 
-        connectToWSServer(successCallback, errorCallback);
+        connectToWSServer(settings, successCallback, errorCallback);
     };
 
 
