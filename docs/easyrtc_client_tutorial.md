@@ -570,6 +570,14 @@ You can disconnect from the server by calling easyrtc.disconnect. Example use:
 
      easyrtc.disconnect();
 
+### Configuring Socket.IO client
+
+It might be useful to customize the socket.io client with some options during its creation. You can set the socket options before instanciating the connection like this:
+
+    var options = {query: 'token=MYTOCKEN'};
+    easyrtc.setSocketOptions(options);
+
+For more details about the available socket.io options, please refer to the official socket.io documentation.
 
 If You Run Into Problems
 ------------------------

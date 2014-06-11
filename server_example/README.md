@@ -30,3 +30,16 @@ Viewing the examples:
 
  - In your WebRTC enabled browser, visit your server address including the port. By default port 8080 is used.
  - http://localhost:8080/
+ 
+  Socket.io with autentication samples
+ ------------------------------------
+
+ The server_auth.js file shows how to use easyrtc with a 'native' socket.io authentication mechanism.
+ Take a look at the code under demos/js/demo_audio_video_simple_auth.js to see how to specify client authentication options.
+
+ - Type 'node server_auth' in console
+
+Then browse to:
+
+- http://localhost:8080/demos/demo_audio_video_simple_auth.html: You will be authorized to create the webrtc channel
+- http://localhost:8080/demos/demo_audio_video_simple_badauth.html: You will get a easyrtc error
