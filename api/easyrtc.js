@@ -4391,6 +4391,8 @@ var Easyrtc = function() {
                         }
                         pc.connectDataConnection(5001, 5002); // these are like ids for data channels
                     }
+                }, function(message) {
+                    self.showError(self.errCodes.INTERNAL_ERR, "set-remote-description: " + message);
                 });
             } catch (smdException) {
                 console.log("setRemoteDescription failed ", smdException);
