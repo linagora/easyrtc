@@ -1340,6 +1340,16 @@ var Easyrtc = function() {
         }
         return count;
     };
+
+    /** Sets the maximum length in bytes of P2P messages that can be sent.
+     * @param {Integer} maxLength maximum length to set
+     * @example
+     *     easyrtc.setMaxP2PMessageLength(10000);
+     */
+    this.setMaxP2PMessageLength = function(limit) {
+        this.maxP2PMessageLength = limit;
+    };
+
     /** Sets whether audio is transmitted by the local user in any subsequent calls.
      * @param {Boolean} enabled true to include audio, false to exclude audio. The default is true.
      * @example
