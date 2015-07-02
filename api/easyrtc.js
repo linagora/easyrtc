@@ -3801,35 +3801,72 @@ var Easyrtc = function() {
                     var msg = JSON.parse(event.data);
                     if (msg) {
                         if (msg.transfer && msg.transferId) {
-                            if (msg.transfer === 'start' && msg.parts) {
+                            if (msg.transfer === 'start') {
                                 if (self.debugPrinter) {
                                     self.debugPrinter('start transfer #' + msg.transferId);
                                 }
-                                pendingTransfers[msg.transferId] = {
+
+                                var parts = parseInt(msg.parts);
+                                pendingTransfer = {
                                     chunks: [],
-                                    parts: msg.parts,
-                                }
-                            } else if (msg.transfer === 'chunk' && msg.data) {
+                                    parts: parts,
+                                    transferId: msg.transferId
+                                };
+
+                            } else if (msg.transfer === 'chunk') {
                                 if (self.debugPrinter) {
                                     self.debugPrinter('got chunk for transfer #' + msg.transferId);
                                 }
-                                pendingTransfers[msg.transferId].chunks.push(msg.data);
+
+                                // check data is valid
+                                if (!(typeof msg.data === 'string' && msg.data.length <= self.maxP2PMessageLength)) {
+                                    console.log('Developer error, invalid data');
+
+                                    // check there's a pending transfer
+                                } else if (!pendingTransfer) {
+                                    console.log('Developer error, unexpected chunk');
+
+                                // check that transferId is valid
+                                } else if (msg.transferId !== pendingTransfer.transferId) {
+                                    console.log('Developer error, invalid transfer id');
+
+                                // check that the max length of transfer is not reached
+                                } else if (pendingTransfer.chunks.length + 1 > pendingTransfer.parts) {
+                                    console.log('Developer error, received too many chunks');
+
+                                } else {
+                                    pendingTransfer.chunks.push(msg.data);
+                                }
 
                             } else if (msg.transfer === 'end') {
                                 if (self.debugPrinter) {
                                     self.debugPrinter('end of transfer #' + msg.transferId);
                                 }
-                                var pendingTransfer = pendingTransfers[msg.transferId];
 
-                                if (!pendingTransfer.chunks.length === pendingTransfer.chunks) {
-                                    console.log('Developper error, a chunk is missing');
+                                // check there's a pending transfer
+                                if (!pendingTransfer) {
+                                    console.log('Developer error, unexpected end of transfer');
+
+                                // check that transferId is valid
+                                } else if (msg.transferId !== pendingTransfer.transferId) {
+                                    console.log('Developer error, invalid transfer id');
+
+                                // check that all the chunks were received
+                                } else if (pendingTransfer.chunks.length !== pendingTransfer.parts) {
+                                    console.log('Developer error, received wrong number of chunks');
+
                                 } else {
-                                    var chunkedMsg = JSON.parse(pendingTransfer.chunks.join(''));
-                                    self.receivePeerDistribute(otherUser, chunkedMsg, null);
-                                    delete pendingTransfers[msg.transferId];
+                                    try {
+                                        var chunkedMsg = JSON.parse(pendingTransfer.chunks.join(''));
+                                        self.receivePeerDistribute(otherUser, chunkedMsg, null);
+                                    } catch (err) {
+                                        console.log('Developer error, unable to parse message');
+                                    }
                                 }
+                                pendingTransfer = {  };
+
                             } else {
-                                console.log('Developper error, got an unknown transfer message' + msg.transfer);
+                                console.log('Developer error, got an unknown transfer message' + msg.transfer);
                             }
                         } else {
                             self.receivePeerDistribute(otherUser, msg, null);
